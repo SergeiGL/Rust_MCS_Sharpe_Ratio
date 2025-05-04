@@ -1,0 +1,11 @@
+[package]
+name = "MCS_Sharpe_Ratio"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+polars = { version = "*", features = ["ndarray"] }
+ndarray = "*"
+ndarray-stats = "*"
+nalgebra = "*"
+Rust_MCS = { git = "https://github.com/SergeiGL/Rust_MCS" }
