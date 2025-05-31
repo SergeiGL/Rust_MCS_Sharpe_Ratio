@@ -116,21 +116,20 @@ fn main() {
     let handler = std::thread::Builder::new()
         .stack_size(32 * 1024 * 1024)  // 32 MiB
         .spawn(|| {
-            const SMAX: usize = 1_000; // number of levels used
-
             // Optimization Bounds:
             let u = SVector::<f64, N_ASSETS>::from_row_slice(&[0.0; N_ASSETS]); // lower bound for weights
             let v = SVector::<f64, N_ASSETS>::from_row_slice(&[MAX_WEIGHT; N_ASSETS]); // upper bound for weights
 
-            let nsweeps = 1000;   // maximum number of sweeps
+            let nsweeps = 1_000;   // maximum number of sweeps
             let nf = 2_000_000; // maximum number of function evaluations
 
-            let local = 500;    // local search level
+            let local = 200;    // local search level
             let gamma = f64::EPSILON;  // acceptable relative accuracy for local search
+            let smax = 1_500; // number of levels used
 
             let hess = SMatrix::<f64, N_ASSETS, N_ASSETS>::repeat(1.); // sparsity pattern of Hessian
 
-            let (xbest, fbest, _, _, _, _, exitflag) = mcs::<SMAX, N_ASSETS>(sharpe_ratio, &u, &v, nsweeps, nf, local, gamma, &hess).unwrap();
+            let (xbest, fbest, _, _, _, _, exitflag) = mcs::<N_ASSETS>(sharpe_ratio, &u, &v, nsweeps, nf, local, gamma, smax, &hess).unwrap();
             println!("Best weights are: {:#?}", modify_weights(&xbest));
             println!("Exit Flag: {exitflag:?}");
             println!("Best sharpe ration is: {fbest}");
