@@ -18,15 +18,15 @@ ratio under practical weight constraints:
     - Drop any stocks whose optimal weight is below 1%.
     - Capture the partial portfolio (weights ≥ 1%) and the total weight allocated so far.
 
-2. **Second pass (1%–10% bounds):**
+2. **Second pass (`MIN_NON_ZERO_WEIGHT`%–10% bounds):**
     - Restrict the optimization to the subset of stocks from the first pass.
     - Treat the previously computed “large‐weight” positions as a baseline, and optimize only the small adjustments needed to lift all weights up to
       at least 1%.
-    - Enforce that each remaining stock’s final weight ∈ [0.01, 0.1], while the dropped stocks remain at zero.
+    - Enforce that each remaining stock’s final weight ∈ (0.0 or [`MIN_NON_ZERO_WEIGHT`, 0.1]), while the dropped stocks remain at zero.
 
 ### Rust Approach (using `Rust_MCS`):
 
-1. **Define the objective function** (Sharpe ratio) given a vector of weights (each ∈ [0.01, 0.1]):
+1. **Define the objective function** (Sharpe ratio) given a vector of weights (each ∈ [0, 0.1]):
 
    Before computing the Sharpe ratio, weights are adjusted as follows:
     - **Threshold**: Set any weight below `MIN_NON_ZERO_WEIGHT` to zero.
@@ -35,7 +35,7 @@ ratio under practical weight constraints:
         1. Identify any weight that exceeds `MAX_WEIGHT`.
         2. Cap it at `MAX_WEIGHT`.
         3. Redistribute the excess proportionally among the other non-zero weights.
-    - **Repeat**: If any weight still falls outside the range [0.01, 0.1], repeat the process.
+    - **Repeat**: If any weight !∈ (0.0 or [`MIN_NON_ZERO_WEIGHT`, 0.1]), repeat the process.
 
 `Note: this function does not work for any weights. However, we got assertions in both versions and it works just fine in our case.`
 
@@ -55,7 +55,7 @@ The `Rust_MCS` optimizer outperformed the Python's approach in this task. Specif
 * **Python (Rust function replica) approach**: ~0.0599
 
 `Rust_MCS` not only achieved a slightly higher Sharpe ratio,
-but also provided sparse solutions that better respected the desired weight constraints (clean 0%, 1%–10% bounds).
+but also provided sparse solutions that better respected the desired weight constraints.
 
 Python (Rust function replica) approach is stuck at the initial point and cannot progress further. That is why it has such a low result.
 
