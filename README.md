@@ -11,7 +11,7 @@ ratio under practical weight constraints:
 - **Total weight constraint:** All asset weights must sum to 100%.
 - **Individual weight constraints:** Each selected stock must have a weight between 1% and 10%, or be zero (unselected).
 
-#### Because directly enforcing a 1% minimum is hard, `Python Approach` (naive) is:
+### Python 2-step approach (naive, but working):
 
 1. **First pass (0%–10% bounds):**
     - Use SciPy’s SLSQP (`scipy.optimize.minimize`) to solve for continuous weights with bounds of [0, 0.1].
@@ -24,7 +24,7 @@ ratio under practical weight constraints:
       at least 1%.
     - Enforce that each remaining stock’s final weight ∈ [0.01, 0.1], while the dropped stocks remain at zero.
 
-#### Rust Approach (using `Rust_MCS`)
+### Rust Approach (using `Rust_MCS`):
 
 1. **Define the objective function** (Sharpe ratio) given a vector of weights (each ∈ [0.01, 0.1]):
 
@@ -37,16 +37,26 @@ ratio under practical weight constraints:
         3. Redistribute the excess proportionally among the other non-zero weights.
     - **Repeat**: If any weight still falls outside the range [0.01, 0.1], repeat the process.
 
+`Note: this function does not work for any weights. However, we got assertions in both versions and it works just fine in our case.`
+
 2. **Execute** the `Rust_MCS` algorithm to optimize the (adjusted) Sharpe ratio.
+
+### Python Approach (Rust function replica):
+
+1. Replicate definition of the Sharpe ratio function as in Rust.
+2. Run simple one-step optimization
 
 ## Results
 
 The `Rust_MCS` optimizer outperformed the Python's approach in this task. Specifically:
 
 * **Rust\_MCS Sharpe ratio**: ~0.1256
-* **Python (SciPy) Sharpe ratio**: ~0.1253
+* **Python 2-step approach**: ~0.1253
+* **Python (Rust function replica) approach**: ~0.0599
 
 `Rust_MCS` not only achieved a slightly higher Sharpe ratio,
 but also provided sparse solutions that better respected the desired weight constraints (clean 0%, 1%–10% bounds).
+
+Python (Rust function replica) approach is stuck at the initial point and cannot progress further. That is why it has such a low result.
 
 This highlights the potential of Rust-based numerical methods in quantitative finance and portfolio optimization.

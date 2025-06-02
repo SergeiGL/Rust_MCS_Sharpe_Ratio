@@ -101,6 +101,9 @@ pub fn modify_weights(weights: &SVector<f64, N_ASSETS>) -> SVector<f64, N_ASSETS
     assert!((scaled_weights.sum() - 1.0_f64).abs() <= f64::EPSILON * 100., "{weights:#?}\n{}", scaled_weights.sum());
     // asserts that max() value is MAX_WEIGHT
     assert!(scaled_weights.max() <= MAX_WEIGHT + f64::EPSILON * 100., "{}", scaled_weights.max());
+    // assert min value != 0 >= MIN_NON_ZERO_WEIGHT
+    let min_nonzero = *scaled_weights.iter().filter(|&&weight| weight > f64::EPSILON).min_by(|a, b| a.total_cmp(b)).unwrap();
+    assert!(min_nonzero >= MIN_NON_ZERO_WEIGHT - f64::EPSILON * 100., "{}", min_nonzero);
 
     scaled_weights
 }
@@ -123,9 +126,9 @@ fn main() {
             let nsweeps = 1_000;   // maximum number of sweeps
             let nf = 2_000_000; // maximum number of function evaluations
 
-            let local = 200;    // local search level
+            let local = 100;    // local search level
             let gamma = f64::EPSILON;  // acceptable relative accuracy for local search
-            let smax = 1_500; // number of levels used
+            let smax = 2_000; // number of levels used
 
             let hess = SMatrix::<f64, N_ASSETS, N_ASSETS>::repeat(1.); // sparsity pattern of Hessian
 
@@ -137,4 +140,21 @@ fn main() {
         .expect("failed to spawn thread");
 
     handler.join().unwrap();
+}
+
+#[cfg(test)]
+mod tests {
+    use nalgebra::SVector;
+    use super::*;
+
+    #[test]
+    fn test_1() {
+        let arr = modify_weights(&SVector::from_row_slice(&[1. / N_ASSETS as f64; N_ASSETS]));
+        println!("{:?}", arr);
+    }
+
+    // #[test]
+    // fn test_2() {
+    //     let _ = modify_weights(&SVector::from_row_slice(&[0.05; N_ASSETS]));
+    // }
 }
